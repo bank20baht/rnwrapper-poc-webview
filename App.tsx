@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { SafeAreaView, Button, BackHandler, Alert } from "react-native";
+import { SafeAreaView, Alert, BackHandler } from "react-native";
 import WebView, { WebViewMessageEvent } from "react-native-webview";
 import * as Device from "expo-device";
 import JailMonkey from "jail-monkey";
@@ -8,6 +8,7 @@ const App: React.FC = () => {
   const webViewRef = useRef<WebView>(null);
   const [deviceName, setDeviceName] = useState<string>();
   const [modelName, setModelName] = useState<string>();
+  const [canGoBack, setCanGoBack] = useState(false);
 
   useEffect(() => {
     if (JailMonkey.isJailBroken()) {
@@ -19,6 +20,7 @@ const App: React.FC = () => {
       );
     }
   }, []);
+
   useEffect(() => {
     const fetchDeviceInfo = async () => {
       if (Device.isDevice) {
@@ -34,8 +36,6 @@ const App: React.FC = () => {
 
     fetchDeviceInfo();
   }, []);
-
-  const [canGoBack, setCanGoBack] = useState(false);
 
   useEffect(() => {
     const backAction = () => {
@@ -76,14 +76,18 @@ const App: React.FC = () => {
     }
   };
 
+  const handleLoadEnd = () => {
+    sendMessageToWeb();
+  };
+
   return (
     <SafeAreaView style={{ flex: 1 }}>
-      <Button title="Send Message to WebView" onPress={sendMessageToWeb} />
       <WebView
         ref={webViewRef}
         source={{ uri: "https://genuine-scone-f8d469.netlify.app" }} // Replace with your web server URL
         onMessage={handleMessage}
         onNavigationStateChange={(navState) => setCanGoBack(navState.canGoBack)}
+        onLoadEnd={handleLoadEnd} // Trigger sending message after load completes
       />
     </SafeAreaView>
   );
